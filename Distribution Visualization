@@ -1,0 +1,54 @@
+%%manim -qm Distributions
+
+# Single Distrobution
+def get_bins(data, nbins, min_val=None, max_val=None):
+        hist_vals = [0]*(nbins+1)
+        if min_val is None:
+            min_val = min(data)
+        if max_val is None:
+            max_val = max(data)
+    
+        for d in data:
+            bin_number = int(nbins * ((d - min_val) / (max_val - min_val)))
+            hist_vals[bin_number] += 1
+        bin_lower_bounds = [min_val + i*(max_val - min_val)/len(hist_vals) for i in range(len(hist_vals))]
+        return hist_vals, bin_lower_bounds
+    
+def get_data():
+    df = pd.read_csv('experiment_data copy.csv')['First Sample'].to_frame()
+    return df
+
+class Distributions(Scene):
+    
+    def construct(self):
+        colors = [BLUE_A,BLUE_C,BLUE_E,BLUE_C,BLUE_A]
+        df = get_data()
+    
+        pos = [5.5*LEFT,3*LEFT,0.5*LEFT,-2*LEFT,-4.5*LEFT]
+        
+        #Title
+        dist_text = Text(df.columns[0]+' - Distribution')
+        dist_text.shift(3.7*UP)
+        dist_text.scale(0.5)
+        line = Line(start=[-3.5,3.4,0],end=[3.5,3.4,0])
+        self.play(Create(line))
+        self.play(Create(dist_text))
+        
+        #Chart
+        values,bins = get_bins(df.iloc[:,0],10)
+        xnames = list(map(str, [round(i,1) for i in bins]))
+        bar_chart = BarChart(values,
+                             bar_colors = colors,
+                             bar_width = 1,
+                             bar_names = xnames
+                            )
+        self.wait(0.5)
+        self.play(DrawBorderThenFill(bar_chart,run_time = 4))
+        self.wait(3)
+        
+        #Mean Std
+        mean = float(df.mean())
+        std = float(df.std())
+        metrics = MathTex(r'\mu = {:.2f} \;\;\;\;\;\; \sigma = {:.2f}'.format(mean,std)).scale(2)
+        self.play(ReplacementTransform(bar_chart,metrics))
+        self.wait(3)
